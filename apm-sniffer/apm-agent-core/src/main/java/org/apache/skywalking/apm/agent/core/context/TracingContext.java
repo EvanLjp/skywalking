@@ -25,7 +25,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.conf.Config;
 import org.apache.skywalking.apm.agent.core.context.ids.DistributedTraceId;
-import org.apache.skywalking.apm.agent.core.context.ids.PropagatedTraceId;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractTracingSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.EntrySpan;
@@ -179,17 +178,8 @@ public class TracingContext implements AbstractTracerContext {
      */
     @Override
     public void extract(ContextCarrier carrier) {
-        TraceSegmentRef ref = new TraceSegmentRef(carrier);
-        this.segment.ref(ref);
-        this.segment.relatedGlobalTraces(new PropagatedTraceId(carrier.getTraceId()));
-        AbstractSpan span = this.activeSpan();
-        if (span instanceof EntrySpan) {
-            span.ref(ref);
-        }
-
-        this.correlationContext.extract(carrier);
-        this.extensionContext.extract(carrier);
-        this.extensionContext.handle(span);
+        ServiceManager.INSTANCE.findService(ContextManagerExtendService.class)
+                               .extract(carrier, this);
     }
 
     /**
@@ -388,6 +378,16 @@ public class TracingContext implements AbstractTracerContext {
     @Override
     public CorrelationContext getCorrelationContext() {
         return this.correlationContext;
+    }
+
+    @Override
+    public TraceSegment getTraceSegment() {
+        return segment;
+    }
+
+    @Override
+    public ExtensionContext getExtensionContext() {
+        return extensionContext;
     }
 
     /**

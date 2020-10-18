@@ -19,6 +19,7 @@
 package org.apache.skywalking.apm.agent.core.context;
 
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
+import org.apache.skywalking.apm.agent.core.context.trace.TraceSegment;
 
 /**
  * The <code>AbstractTracerContext</code> represents the tracer context manager.
@@ -116,7 +117,17 @@ public interface AbstractTracerContext {
     void asyncStop(AsyncSpan span);
 
     /**
-     * Get current correlation context
+     * Get current correlation context.
      */
     CorrelationContext getCorrelationContext();
+
+    /**
+     * Get segment in current trace context.
+     */
+    TraceSegment getTraceSegment();
+
+    /**
+     * Get current extensionContext.
+     */
+    ExtensionContext getExtensionContext();
 }

@@ -20,8 +20,10 @@ package org.apache.skywalking.apm.agent.core.context;
 
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.NoopSpan;
+import org.apache.skywalking.apm.agent.core.context.trace.TraceSegment;
 
 /**
  * The <code>IgnoredTracerContext</code> represent a context should be ignored. So it just maintains the stack with an
@@ -50,7 +52,8 @@ public class IgnoredTracerContext implements AbstractTracerContext {
 
     @Override
     public void extract(ContextCarrier carrier) {
-        this.correlationContext.extract(carrier);
+        ServiceManager.INSTANCE.findService(ContextManagerExtendService.class)
+                               .extract(carrier, this);
     }
 
     @Override
@@ -113,6 +116,16 @@ public class IgnoredTracerContext implements AbstractTracerContext {
     @Override
     public CorrelationContext getCorrelationContext() {
         return this.correlationContext;
+    }
+
+    @Override
+    public TraceSegment getTraceSegment() {
+        return null;
+    }
+
+    @Override
+    public ExtensionContext getExtensionContext() {
+        return extensionContext;
     }
 
     public static class ListenerManager {

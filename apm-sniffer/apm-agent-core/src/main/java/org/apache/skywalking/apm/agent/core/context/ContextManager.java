@@ -18,6 +18,7 @@
 
 package org.apache.skywalking.apm.agent.core.context;
 
+import java.util.Objects;
 import org.apache.skywalking.apm.agent.core.boot.BootService;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
@@ -83,23 +84,23 @@ public class ContextManager implements BootService {
         AbstractSpan span;
         AbstractTracerContext context;
         operationName = StringUtil.cut(operationName, OPERATION_NAME_THRESHOLD);
-        if (carrier != null && carrier.isValid()) {
+        if (Objects.nonNull(carrier) && carrier.isValid()) {
             SamplingService samplingService = ServiceManager.INSTANCE.findService(SamplingService.class);
             samplingService.forceSampled();
             context = getOrCreate(operationName, true);
-            span = context.createEntrySpan(operationName);
-            context.extract(carrier);
         } else {
             context = getOrCreate(operationName, false);
-            span = context.createEntrySpan(operationName);
         }
-        return span;
+        span = context.createEntrySpan(operationName);
+        context.extract(carrier);
+        return callback(span);
     }
 
     public static AbstractSpan createLocalSpan(String operationName) {
         operationName = StringUtil.cut(operationName, OPERATION_NAME_THRESHOLD);
         AbstractTracerContext context = getOrCreate(operationName, false);
-        return context.createLocalSpan(operationName);
+        AbstractSpan span = context.createLocalSpan(operationName);
+        return callback(span);
     }
 
     public static AbstractSpan createExitSpan(String operationName, ContextCarrier carrier, String remotePeer) {
@@ -110,13 +111,20 @@ public class ContextManager implements BootService {
         AbstractTracerContext context = getOrCreate(operationName, false);
         AbstractSpan span = context.createExitSpan(operationName, remotePeer);
         context.inject(carrier);
-        return span;
+        return callback(span);
     }
 
     public static AbstractSpan createExitSpan(String operationName, String remotePeer) {
         operationName = StringUtil.cut(operationName, OPERATION_NAME_THRESHOLD);
         AbstractTracerContext context = getOrCreate(operationName, false);
-        return context.createExitSpan(operationName, remotePeer);
+        AbstractSpan span = context.createExitSpan(operationName, remotePeer);
+        return callback(span);
+    }
+
+    private static AbstractSpan callback(AbstractSpan span) {
+        ServiceManager.INSTANCE.findService(ContextManagerExtendService.class)
+                               .injectSpan(span, get().getCorrelationContext());
+        return span;
     }
 
     public static void inject(ContextCarrier carrier) {
@@ -127,9 +135,7 @@ public class ContextManager implements BootService {
         if (carrier == null) {
             throw new IllegalArgumentException("ContextCarrier can't be null.");
         }
-        if (carrier.isValid()) {
-            get().extract(carrier);
-        }
+        get().extract(carrier);
     }
 
     public static ContextSnapshot capture() {

@@ -18,10 +18,15 @@
 
 package org.apache.skywalking.apm.agent.core.context;
 
+import java.util.Objects;
 import org.apache.skywalking.apm.agent.core.boot.BootService;
 import org.apache.skywalking.apm.agent.core.boot.DefaultImplementor;
 import org.apache.skywalking.apm.agent.core.boot.ServiceManager;
 import org.apache.skywalking.apm.agent.core.conf.Config;
+import org.apache.skywalking.apm.agent.core.context.ids.PropagatedTraceId;
+import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
+import org.apache.skywalking.apm.agent.core.context.trace.EntrySpan;
+import org.apache.skywalking.apm.agent.core.context.trace.TraceSegmentRef;
 import org.apache.skywalking.apm.agent.core.remote.GRPCChannelListener;
 import org.apache.skywalking.apm.agent.core.remote.GRPCChannelManager;
 import org.apache.skywalking.apm.agent.core.remote.GRPCChannelStatus;
@@ -79,4 +84,23 @@ public class ContextManagerExtendService implements BootService, GRPCChannelList
     public void statusChanged(final GRPCChannelStatus status) {
         this.status = status;
     }
+
+    public void extract(ContextCarrier carrier, AbstractTracerContext context) {
+        if (Objects.nonNull(carrier) && carrier.isValid()) {
+            TraceSegmentRef ref = new TraceSegmentRef(carrier);
+            context.getTraceSegment().ref(ref);
+            context.getTraceSegment().relatedGlobalTraces(new PropagatedTraceId(carrier.getTraceId()));
+            AbstractSpan span = context.activeSpan();
+            if (span instanceof EntrySpan) {
+                span.ref(ref);
+            }
+            context.getCorrelationContext().extract(carrier);
+            context.getExtensionContext().handle(span);
+        }
+    }
+
+    public void injectSpan(final AbstractSpan span, final CorrelationContext correlationContext) {
+
+    }
+
 }

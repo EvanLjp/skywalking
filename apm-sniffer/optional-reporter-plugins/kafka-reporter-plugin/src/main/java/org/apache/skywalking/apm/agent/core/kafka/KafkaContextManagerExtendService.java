@@ -19,14 +19,14 @@
 package org.apache.skywalking.apm.agent.core.kafka;
 
 import org.apache.skywalking.apm.agent.core.boot.OverrideImplementor;
-import org.apache.skywalking.apm.agent.core.context.ContextManagerExtendService;
+import org.apache.skywalking.apm.agent.core.context.ContextManagerExtendAdvancedService;
 import org.apache.skywalking.apm.agent.core.remote.GRPCChannelStatus;
 
 /**
- * For compatible with {@link ContextManagerExtendService}, don't need to manage connection status by self.
+ * For compatible with {@link ContextManagerExtendAdvancedService}, don't need to manage connection status by self.
  */
-@OverrideImplementor(ContextManagerExtendService.class)
-public class KafkaContextManagerExtendService extends ContextManagerExtendService {
+@OverrideImplementor(ContextManagerExtendAdvancedService.class)
+public class KafkaContextManagerExtendService extends ContextManagerExtendAdvancedService {
 
     @Override
     public void prepare() {

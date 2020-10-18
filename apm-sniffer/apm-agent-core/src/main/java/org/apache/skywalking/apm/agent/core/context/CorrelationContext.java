@@ -150,6 +150,10 @@ public class CorrelationContext {
         this.data.putAll(snapshot.getCorrelationContext().data);
     }
 
+    void remove(String tag) {
+        data.remove(tag);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
